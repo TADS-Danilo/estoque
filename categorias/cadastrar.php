@@ -5,18 +5,18 @@ require_once "../classes/Categoria.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $nome = trim($_POST["nome"]);
+    try {
 
-    if ($nome != "") {
+        $nome = trim($_POST["nome"]);
 
         $categoria = new Categoria($nome);
+        $categoria->cadastrar();
 
-        if ($categoria->cadastrar()) {
-            $mensagem = "Categoria cadastrada com sucesso!";
-        }
+        $mensagem = "Categoria cadastrada com sucesso!";
 
-    } else {
-        $mensagem = "Informe o nome da categoria.";
+    } catch (Exception $e) {
+
+        $erro = $e->getMessage();
     }
 }
 
@@ -33,8 +33,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <h1>Cadastro de Categorias</h1>
 
-    <?php if (isset($mensagem)) { ?>
-        <p><?= htmlspecialchars($mensagem) ?></p>
+    <?php if (!empty($mensagem)) { ?>
+        <p style="color: green;">
+            <?= htmlspecialchars($mensagem) ?>
+        </p>
+    <?php } ?>
+
+    <?php if (!empty($erro)) { ?>
+        <p style="color: red;">
+            <?= htmlspecialchars($erro) ?>
+        </p>
     <?php } ?>
 
     <form method="POST">

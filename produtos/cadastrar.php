@@ -9,20 +9,27 @@ require_once "../classes/Categoria.php";
 $categoria = new Categoria();
 $categorias = $categoria->listar();
 
+$mensagem = "";
+$erro = "";
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    try {
+        $produto = new Produto(
+            trim($_POST["nome"]),
+            $_POST["categoria_id"],
+            $_POST["quantidade"],
+            $_POST["preco"],
+            trim($_POST["localizacao"]),
+            $_POST["estoque_minimo"],
+            $_POST["estoque_maximo"]
+        );
 
-    $produto = new Produto(
-        trim($_POST["nome"]),
-        $_POST["categoria_id"],
-        $_POST["quantidade"],
-        $_POST["preco"],
-        trim($_POST["localizacao"]),
-        $_POST["estoque_minimo"],
-        $_POST["estoque_maximo"]
-    );
+        $produto->cadastrar();
 
-    if ($produto->cadastrar()) {
         $mensagem = "Produto cadastrado com sucesso!";
+
+    } catch (Exception $e) {
+        $erro = $e->getMessage();
     }
 }
 
@@ -39,8 +46,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     <h1>Cadastro de Produtos</h1>
 
-    <?php if (isset($mensagem)) { ?>
-        <p><?= htmlspecialchars($mensagem) ?></p>
+    <?php if (!empty($mensagem)) { ?>
+        <p style="color: green;">
+            <?= htmlspecialchars($mensagem) ?>
+        </p>
+    <?php } ?>
+
+    <?php if (!empty($erro)) { ?>
+        <p style="color: red;">
+            <?= htmlspecialchars($erro) ?>
+        </p>
     <?php } ?>
 
     <form method="POST">

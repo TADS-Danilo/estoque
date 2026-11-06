@@ -12,15 +12,35 @@ class Categoria {
         $this->nome = $nome;
     }
 
-    public function cadastrar() {
+    public function existe($nome) {
 
-        $sql = "INSERT INTO categoria (nome)
-                VALUES (:nome)";
+        $sql = "SELECT id FROM categoria
+                WHERE nome = :nome";
 
         $conexao = Conexao::conectar();
 
         $stmt = $conexao->prepare($sql);
+        $stmt->bindValue(":nome", $nome);
+        $stmt->execute();
 
+        return $stmt->fetch() !== false;
+    }
+
+    public function cadastrar() {
+
+        if (empty(trim($this->nome))) {
+            throw new Exception("O nome da categoria é obrigatório.");
+        }
+
+        if ($this->existe($this->nome)) {
+            throw new Exception("Já existe uma categoria com esse nome.");
+        }
+
+        $sql = "INSERT INTO categoria (nome) VALUES (:nome)";
+
+        $conexao = Conexao::conectar();
+
+        $stmt = $conexao->prepare($sql);
         $stmt->bindValue(":nome", $this->nome);
 
         return $stmt->execute();

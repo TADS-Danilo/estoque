@@ -32,24 +32,90 @@ class Produto {
         $this->estoque_maximo = $estoque_maximo;
     }
 
-    public function cadastrar() {
+    public function existe($nome) {
 
-        $sql = "INSERT INTO produto
-                (nome, categoria_id, quantidade, preco,
-                 localizacao, estoque_minimo, estoque_maximo)
-                VALUES
-                (:nome, :categoria_id, :quantidade, :preco,
-                 :localizacao, :estoque_minimo, :estoque_maximo)";
+        $sql = "SELECT id FROM produto
+                WHERE nome = :nome";
 
         $conexao = Conexao::conectar();
 
         $stmt = $conexao->prepare($sql);
+        $stmt->bindValue(":nome", $nome);
+        $stmt->execute();
 
-        $stmt->bindValue(":nome", $this->nome);
+        return $stmt->fetch() !== false;
+    }
+
+    public function cadastrar() {
+
+        // Valida o nome
+        if (empty(trim($this->nome))) {
+            throw new Exception("O nome do produto é obrigatório.");
+        }
+
+        // Verifica se o produto já existe
+        if ($this->existe($this->nome)) {
+            throw new Exception("Já existe um produto com esse nome.");
+        }
+
+        // Valida a categoria
+        if (empty($this->categoria_id)) {
+            throw new Exception("Selecione uma categoria.");
+        }
+
+        // Valida a quantidade
+        if ($this->quantidade < 0) {
+            throw new Exception("A quantidade não pode ser negativa.");
+        }
+
+        // Valida o preço
+        if ($this->preco < 0) {
+            throw new Exception("O preço não pode ser negativo.");
+        }
+
+        // Valida a localização
+        if (empty(trim($this->localizacao))) {
+            throw new Exception("A localização é obrigatória.");
+        }
+
+        // Valida o estoque mínimo
+        if ($this->estoque_minimo < 0) {
+            throw new Exception("O estoque mínimo não pode ser negativo.");
+        }
+
+        // Valida o estoque máximo
+        if ($this->estoque_maximo < $this->estoque_minimo) {
+            throw new Exception("O estoque máximo deve ser maior ou igual ao estoque mínimo.");
+        }
+
+        // Verifica se a categoria existe
+        $sql = "SELECT id FROM categoria WHERE id = :id";
+
+        $conexao = Conexao::conectar();
+
+        $stmt = $conexao->prepare($sql);
+        $stmt->bindValue(":id", $this->categoria_id);
+        $stmt->execute();
+
+        if (!$stmt->fetch()) {
+            throw new Exception("A categoria selecionada não existe.");
+        }
+
+        // Cadastra o produto
+        $sql = "INSERT INTO produto
+                (nome, categoria_id, quantidade, preco,
+                localizacao, estoque_minimo, estoque_maximo)
+                VALUES
+                (:nome, :categoria_id, :quantidade, :preco,
+                :localizacao, :estoque_minimo, :estoque_maximo)";
+
+        $stmt = $conexao->prepare($sql);
+
+        $stmt->bindValue(":nome", trim($this->nome));
         $stmt->bindValue(":categoria_id", $this->categoria_id);
         $stmt->bindValue(":quantidade", $this->quantidade);
         $stmt->bindValue(":preco", $this->preco);
-        $stmt->bindValue(":localizacao", $this->localizacao);
+        $stmt->bindValue(":localizacao", trim($this->localizacao));
         $stmt->bindValue(":estoque_minimo", $this->estoque_minimo);
         $stmt->bindValue(":estoque_maximo", $this->estoque_maximo);
 
@@ -71,7 +137,6 @@ class Produto {
 
         return $stmt->fetchAll();
     }
-
 
     public function consultarPorNome($nome) {
 
